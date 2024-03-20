@@ -5,11 +5,13 @@ import numpy as np
 import requests
 
 # 도트 그림 코드
+
+
 class Paint():
     def __init__(self):
         t.colormode(255)
         t.shape("square")
-        t.shapesize(0.5) # 10 pixel
+        t.shapesize(0.5)  # 10 pixel
 
         self.PIXEL = 16
         self.BEGIN_X = -(self.PIXEL / 2 * 10)
@@ -29,6 +31,7 @@ class Paint():
                 t.stamp()
                 t.teleport(self.BEGIN_X + (x + 1) * 10)
             t.teleport(self.BEGIN_X, self.BEGIN_Y + (y + 1) * (-10))
+
 
 # 과제 코드
 EXPRESS = " "
@@ -81,8 +84,8 @@ while True:
 # 추가적으로 필요한 변수들 저장
 half_x = x / 2
 half_y = y / 2
-area = x * y # 넓이
-perimeter = 2 * (x + y) # 둘레의 길이
+area = x * y  # 넓이
+perimeter = 2 * (x + y)  # 둘레의 길이
 
 # 정보 출력
 print(f"입력하신 정보는 가로 : {x}, 세로 : {y}, 색상 : {COLOR} 입니다.")
