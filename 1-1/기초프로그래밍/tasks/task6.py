@@ -55,14 +55,17 @@ class PaintBoard:
 
         self.draw_canvas.delete("temp")
 
-        if self.shape_var.get() == "직선":
+        if self.shape_var.get() == "line":
             return self.draw_canvas.create_line(*all_pos, fill=color, tags=tag_name)
-        elif self.shape_var.get() == "사각형":
+        elif self.shape_var.get() == "rect":
             return self.draw_canvas.create_rectangle(*all_pos, outline=color, fill=fill_color, tags=tag_name)
-        elif self.shape_var.get() == "타원":
+        elif self.shape_var.get() == "oval":
             return self.draw_canvas.create_oval(*all_pos, outline=color, fill=fill_color, tags=tag_name)
 
     def make_widgets(self):
+        args = {"side": tk.LEFT, "fill": tk.X, "expand": True}
+        grid_args = {"column": 0, "sticky": tk.NSEW, "padx": 5}
+
         # == 생성 == #
         # in header
         all_delete_btn = ttk.Button(self.header, text="모두 삭제", command=lambda: self.draw_canvas.delete(tk.ALL))
@@ -73,39 +76,29 @@ class PaintBoard:
         color_frame = ttk.LabelFrame(self.footer, text="색깔 설정")
         fill_frame = ttk.LabelFrame(self.footer, text="색깔 채움 설정")
         # footer_shape
-        line = ttk.Radiobutton(shape_frame, text="직선", value="직선", variable=self.shape_var)
-        rect = ttk.Radiobutton(shape_frame, text="사각형", value="사각형", variable=self.shape_var)
-        oval = ttk.Radiobutton(shape_frame, text="타원", value="타원", variable=self.shape_var)
-        # footer_color
-        red = ttk.Radiobutton(color_frame, text="빨강", value="red", variable=self.color_var)
-        green = ttk.Radiobutton(color_frame, text="초록", value="green", variable=self.color_var)
-        blue = ttk.Radiobutton(color_frame, text="파랑", value="blue", variable=self.color_var)
+        shape_list = {"line": "직선", "rect": "사각형", "oval": "타원"}
+        color_list = {"red": "빨강", "green": "초록", "blue": "파랑"}
+        var_list = {"shape": [shape_frame, self.shape_var, shape_list],
+                    "color": [color_frame, self.color_var, color_list]}
+        for values in var_list.values():
+            for v, t in values[2].items():
+                ttk.Radiobutton(values[0], variable=values[1], text=t, value=v).pack(**args)
         # footer_fill
         check_fill = ttk.Checkbutton(fill_frame, text="색깔 채움 여부", variable=self.check_fill_var)
 
         # == 배치 == #
         # 3프레임 (Header, Main, Footer)
-        grid_args = {"column": 0, "sticky": tk.NSEW, "padx": 5}
         self.header.grid(row=0, columnspan=1, **grid_args, pady=(5, 0))
         self.draw_canvas.grid(row=1, columnspan=4, **grid_args, pady=5)
         self.footer.grid(row=2, columnspan=4, **grid_args, pady=(0, 5))
         # 하위 위젯들
-        args = {"side": tk.LEFT, "fill": tk.X, "expand": True}
         # in header
         all_delete_btn.pack(**args, padx=(0, 5))
-        undo_btn.pack(side=tk.RIGHT, fill="x", expand=True)
+        undo_btn.pack(**args)
         # in footer
         shape_frame.pack(**args)
         color_frame.pack(**args, padx=5)
         fill_frame.pack(**args)
-        # footer_shape
-        line.pack(**args)
-        rect.pack(**args)
-        oval.pack(**args)
-        # footer_color
-        red.pack(**args)
-        green.pack(**args)
-        blue.pack(**args)
         # footer_fill
         check_fill.pack()
 
