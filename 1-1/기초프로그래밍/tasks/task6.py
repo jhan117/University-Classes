@@ -1,127 +1,114 @@
 import tkinter as tk
 from tkinter import ttk
 
-global prev_pos
 
-works = []
+class PaintBoard:
+    def __init__(self):
+        # 화면 초기 설정
+        self.root = tk.Tk()
+        self.root.title("Paint Board")
+        self.root.geometry("750x500")
+        self.root.rowconfigure(0, weight=0)
+        self.root.rowconfigure(1, weight=1)
+        self.root.rowconfigure(2, weight=0)
+        for i in range(4):
+            self.root.columnconfigure(i, weight=1)
 
-root = tk.Tk()
-root.title("Paint Board")
-root.geometry("750x500")
+        # 초기 변수
+        self.works = []
+        self.prev_pos = (0, 0)
 
-root.rowconfigure(0, weight=0)
-root.rowconfigure(1, weight=1)
-root.rowconfigure(2, weight=0)
+        # 위젯들 생성 및 배치
+        self.header = ttk.Frame(self.root)
+        self.draw_canvas = tk.Canvas(self.root, bg="white")
+        self.footer = ttk.Frame(self.root)
+        self.shape_var = tk.StringVar(None, "")
+        self.color_var = tk.StringVar(None, "")
+        self.check_fill_var = tk.BooleanVar()
+        self.make_widgets()
 
-for i in range(4):
-    root.columnconfigure(i, weight=1)
+        # === event === #
+        self.draw_canvas.bind("<Button-1>", self.press_mouse)  # 클릭
+        self.draw_canvas.bind("<B1-Motion>", self.motion_mouse)  # 왼클릭하면서 움직임
+        self.draw_canvas.bind("<ButtonRelease-1>", self.release_mouse)  # 뗌
+
+        self.root.mainloop()
+
+    def press_mouse(self, e):
+        self.prev_pos = (e.x, e.y)
+
+    def motion_mouse(self, e):
+        self.create_polygon(e)
+
+    def release_mouse(self, e):
+        drew_shape = self.create_polygon(e, is_moving=False)
+        if drew_shape:
+            self.works.append(drew_shape)
+
+    def create_polygon(self, e, is_moving=True):
+        # 변수 설정
+        all_pos = (*self.prev_pos, e.x, e.y)
+        cur_color = self.color_var.get()
+        tag_name = "temp" if is_moving else ""
+        color = cur_color if cur_color else "black"
+        fill_color = cur_color if self.check_fill_var.get() else ""
+
+        self.draw_canvas.delete("temp")
+
+        if self.shape_var.get() == "직선":
+            return self.draw_canvas.create_line(*all_pos, fill=color, tags=tag_name)
+        elif self.shape_var.get() == "사각형":
+            return self.draw_canvas.create_rectangle(*all_pos, outline=color, fill=fill_color, tags=tag_name)
+        elif self.shape_var.get() == "타원":
+            return self.draw_canvas.create_oval(*all_pos, outline=color, fill=fill_color, tags=tag_name)
+
+    def make_widgets(self):
+        # == 생성 == #
+        # in header
+        all_delete_btn = ttk.Button(self.header, text="모두 삭제", command=lambda: self.draw_canvas.delete(tk.ALL))
+        undo_btn = ttk.Button(self.header, text="Undo",
+                              command=lambda: self.draw_canvas.delete(self.works.pop()) if self.works else None)
+        # in footer
+        shape_frame = ttk.LabelFrame(self.footer, text="모양 설정")
+        color_frame = ttk.LabelFrame(self.footer, text="색깔 설정")
+        fill_frame = ttk.LabelFrame(self.footer, text="색깔 채움 설정")
+        # footer_shape
+        line = ttk.Radiobutton(shape_frame, text="직선", value="직선", variable=self.shape_var)
+        rect = ttk.Radiobutton(shape_frame, text="사각형", value="사각형", variable=self.shape_var)
+        oval = ttk.Radiobutton(shape_frame, text="타원", value="타원", variable=self.shape_var)
+        # footer_color
+        red = ttk.Radiobutton(color_frame, text="빨강", value="red", variable=self.color_var)
+        green = ttk.Radiobutton(color_frame, text="초록", value="green", variable=self.color_var)
+        blue = ttk.Radiobutton(color_frame, text="파랑", value="blue", variable=self.color_var)
+        # footer_fill
+        check_fill = ttk.Checkbutton(fill_frame, text="색깔 채움 여부", variable=self.check_fill_var)
+
+        # == 배치 == #
+        # 3프레임 (Header, Main, Footer)
+        grid_args = {"column": 0, "sticky": tk.NSEW, "padx": 5}
+        self.header.grid(row=0, columnspan=1, **grid_args, pady=(5, 0))
+        self.draw_canvas.grid(row=1, columnspan=4, **grid_args, pady=5)
+        self.footer.grid(row=2, columnspan=4, **grid_args, pady=(0, 5))
+        # 하위 위젯들
+        args = {"side": tk.LEFT, "fill": tk.X, "expand": True}
+        # in header
+        all_delete_btn.pack(**args, padx=(0, 5))
+        undo_btn.pack(side=tk.RIGHT, fill="x", expand=True)
+        # in footer
+        shape_frame.pack(**args)
+        color_frame.pack(**args, padx=5)
+        fill_frame.pack(**args)
+        # footer_shape
+        line.pack(**args)
+        rect.pack(**args)
+        oval.pack(**args)
+        # footer_color
+        red.pack(**args)
+        green.pack(**args)
+        blue.pack(**args)
+        # footer_fill
+        check_fill.pack()
 
 
-def create_polygon(e, is_moving=True):
-    global prev_pos
-    (prev_x, prev_y) = prev_pos
-
-    draw_canvas.delete("temp")
-
-    color = color_var.get()
-    color = "black" if color == " " else color
-
-    if check_fill_var.get():
-        fill_color = color_var.get()
-    else:
-        fill_color = ""
-
-    if is_moving:
-        if shape_var.get() == "직선":
-            draw_canvas.create_line(prev_x, prev_y, e.x, e.y, fill=color, tags="temp")
-        elif shape_var.get() == "사각형":
-            draw_canvas.create_rectangle(prev_x, prev_y, e.x, e.y, outline=color, fill=fill_color, tags="temp")
-        elif shape_var.get() == "타원":
-            draw_canvas.create_oval(prev_x, prev_y, e.x, e.y, outline=color, fill=fill_color, tags="temp")
-    else:
-        if shape_var.get() == "직선":
-            return draw_canvas.create_line(prev_x, prev_y, e.x, e.y, fill=color)
-        elif shape_var.get() == "사각형":
-            return draw_canvas.create_rectangle(prev_x, prev_y, e.x, e.y, outline=color, fill=fill_color)
-        elif shape_var.get() == "타원":
-            return draw_canvas.create_oval(prev_x, prev_y, e.x, e.y, outline=color, fill=fill_color)
-
-
-def undo_btn():
-    if works:
-        draw_canvas.delete(works.pop())
-
-
-def press_mouse(e):
-    global prev_pos
-    prev_pos = (e.x, e.y)
-
-
-def motion_mouse(e):
-    create_polygon(e)
-
-
-def release_mouse(e):
-    drew_shape = create_polygon(e, is_moving=False)
-
-    if drew_shape:
-        works.append(drew_shape)
-
-
-# header
-header = ttk.Frame(root)
-header.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=5, pady=(5, 0))
-
-ttk.Button(header, text="모두 삭제",
-           command=lambda: draw_canvas.delete(tk.ALL)).pack(side=tk.LEFT, fill="x", expand=True, padx=(0, 5))
-ttk.Button(header, text="Undo",
-           command=undo_btn).pack(side=tk.RIGHT, fill="x", expand=True)
-
-# main
-draw_canvas = tk.Canvas(root, bg="white")
-draw_canvas.grid(row=1, column=0, columnspan=4, sticky="nsew", padx=5, pady=5)
-
-# footer
-footer = ttk.Frame(root)
-footer.grid(row=2, column=0, columnspan=4, sticky="nsew", padx=5, pady=(0, 5))
-
-shape_frame = ttk.LabelFrame(footer, text="모양 설정")
-color_frame = ttk.LabelFrame(footer, text="색깔 설정")
-fill_frame = ttk.LabelFrame(footer, text="색깔 채움 설정")
-
-shape_frame.pack(side=tk.LEFT, fill="x", expand=True)
-color_frame.pack(side=tk.LEFT, fill="x", expand=True, padx=5)
-fill_frame.pack(side=tk.LEFT, fill="x", expand=True)
-
-# footer_shape
-shape_var = tk.StringVar(None, " ")
-line = ttk.Radiobutton(shape_frame, text="직선", value="직선", variable=shape_var)
-rect = ttk.Radiobutton(shape_frame, text="사각형", value="사각형", variable=shape_var)
-oval = ttk.Radiobutton(shape_frame, text="타원", value="타원", variable=shape_var)
-
-line.pack(side=tk.LEFT, fill="x", expand=True)
-rect.pack(side=tk.LEFT, fill="x", expand=True)
-oval.pack(side=tk.LEFT, fill="x", expand=True)
-
-# footer_color
-color_var = tk.StringVar(None, " ")
-red = ttk.Radiobutton(color_frame, text="빨강", value="red", variable=color_var)
-green = ttk.Radiobutton(color_frame, text="초록", value="green", variable=color_var)
-blue = ttk.Radiobutton(color_frame, text="파랑", value="blue", variable=color_var)
-
-red.pack(side=tk.LEFT, fill="x", expand=True)
-green.pack(side=tk.LEFT, fill="x", expand=True)
-blue.pack(side=tk.LEFT, fill="x", expand=True)
-
-# footer_fill
-check_fill_var = tk.BooleanVar()
-check_fill = ttk.Checkbutton(fill_frame, text="색깔 채움 여부", variable=check_fill_var)
-
-check_fill.pack()
-
-# === event === #
-draw_canvas.bind("<Button-1>", press_mouse)  # 클릭
-draw_canvas.bind("<B1-Motion>", motion_mouse)  # 왼클릭하면서 움직임
-draw_canvas.bind("<ButtonRelease-1>", release_mouse)  # 뗌
-
-root.mainloop()
+if __name__ == "__main__":
+    PaintBoard()
