@@ -12,7 +12,7 @@ import pickle
 import sys
 
 n = int(input("몇 개의 int를 저장할까요? "))
-file = open("resource/test.dat", "wb")
+file = open("resources/test.dat", "wb")
 
 for i in range(n):                    # 0부터 차례로
     pickle.dump(i, file)              # int 객체 쓰기
@@ -20,7 +20,7 @@ for i in range(n):                    # 0부터 차례로
 file.close()
 
 
-read_file = open("resource/test.dat", "rb")
+read_file = open("resources/test.dat", "rb")
 
 try:
     while True:

@@ -25,13 +25,13 @@ pt1 = Point(1, 2)
 pt2 = Point(3, 4)
 pt3 = pt1 + pt2
 
-file = open("resource/point.dat", "wb")
+file = open("resources/point.dat", "wb")
 pickle.dump(pt1, file)
 pickle.dump(pt2, file)
 pickle.dump(pt3, file)
 file.close()
 
-re_open = open("resource/point.dat", "rb")
+re_open = open("resources/point.dat", "rb")
 pt1 = pickle.load(re_open)
 pt2 = pickle.load(re_open)
 pt3 = pickle.load(re_open)
