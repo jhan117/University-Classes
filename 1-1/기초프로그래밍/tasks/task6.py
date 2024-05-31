@@ -20,16 +20,18 @@ class PaintBoard:
         self.is_pen = True
         self.temp_lines = []
 
-        # 위젯들 생성 및 배치
-        self.header = ttk.Frame(self.root)
-        self.draw_canvas = tk.Canvas(self.root, bg="white")
-        self.footer = ttk.Notebook(self.root)
+        # == variables of widget == #
         self.tool_var = tk.IntVar(None, 1)  # 0: 지우개, 1: 펜
         self.size_var = tk.IntVar(None, 3)  # 1: 얇게, 3: 보통, 5: 굵게
         self.pen_color_var = tk.StringVar(None, "")
         self.shape_var = tk.StringVar(None, "line")
         self.color_var = tk.StringVar(None, "")
         self.check_fill_var = tk.BooleanVar()
+
+        # == widgets == #
+        self.header = ttk.Frame(self.root)
+        self.draw_canvas = tk.Canvas(self.root, bg="white")
+        self.footer = ttk.Notebook(self.root)
         self.make_widgets()
 
         # === event === #
@@ -41,15 +43,16 @@ class PaintBoard:
         self.root.mainloop()
 
     def press_mouse(self, e):
+        """<Button-1>"""
         self.prev_pos = (e.x, e.y)
-        if self.is_pen:
-            self.works.append(self.temp_lines)
+        self.works.append(self.temp_lines) if self.is_pen else None
 
     def motion_mouse(self, e):
+        """<B1-Motion>"""
         if self.is_pen:
-            if self.tool_var.get():
+            if self.tool_var.get():     # 연필
                 color = self.pen_color_var.get() if self.pen_color_var.get() else "black"
-            else:
+            else:   # 지우개
                 color = "white"
             temp_line = self.draw_canvas.create_line(*self.prev_pos, e.x, e.y, fill=color, width=self.size_var.get())
             self.temp_lines.append(temp_line)
@@ -58,6 +61,7 @@ class PaintBoard:
             self.create_polygon(e)
 
     def release_mouse(self, e):
+        """<ButtonRelease-1>"""
         if self.is_pen:
             self.temp_lines = []
         else:
@@ -66,12 +70,14 @@ class PaintBoard:
                 self.works.append(drew_shape)
 
     def change_cursor(self, e):
+        cursor = ""
         if self.footer.index("current"):
             self.is_pen = False
-            self.draw_canvas.config(cursor="tcross")
+            cursor = "tcross"
         else:
             self.is_pen = True
-            self.draw_canvas.config(cursor="dotbox")
+            cursor = "dotbox"
+        self.draw_canvas.config(cursor=cursor)
 
     def undo_work(self):
         if self.works:
@@ -103,62 +109,51 @@ class PaintBoard:
         args = {"side": tk.LEFT, "fill": tk.X, "expand": True}
         grid_args = {"column": 0, "sticky": tk.NSEW, "padx": 5}
 
-        # == 생성 == #
-        # in header
-        all_delete_btn = ttk.Button(self.header, text="모두 삭제", command=lambda: self.draw_canvas.delete(tk.ALL))
-        undo_btn = ttk.Button(self.header, text="Undo", command=self.undo_work)
-        # in footer
+        # == 생성 및 배치 == #
+        self.header.grid(row=0, columnspan=1, **grid_args, pady=(5, 0))
+        self.draw_canvas.grid(row=1, columnspan=4, **grid_args, pady=5)
+        self.footer.grid(row=2, columnspan=4, **grid_args, pady=(0, 5))
+        # header: 모두 삭제 및 Undo 버튼
+        ttk.Button(self.header, text="모두 삭제", command=lambda: self.draw_canvas.delete(tk.ALL)).pack(**args, padx=(0, 5))
+        ttk.Button(self.header, text="Undo", command=self.undo_work).pack(side=tk.RIGHT, fill="x", expand=True)
+        # footer
         footer_pen = ttk.Frame(self.footer)
         footer_poly = ttk.Frame(self.footer)
         self.footer.add(footer_pen, text="그리기", padding=5)
         self.footer.add(footer_poly, text="도형", padding=5)
-
-        # footer_pen
-        tools_frame = ttk.LabelFrame(footer_pen, text="도구 설정")
-        color_frame_pen = ttk.LabelFrame(footer_pen, text="색깔 설정")
-        size_frame = ttk.LabelFrame(footer_pen, text="크기 설정")
-        # footer_poly
-        shape_frame = ttk.LabelFrame(footer_poly, text="모양 설정")
-        color_frame = ttk.LabelFrame(footer_poly, text="색깔 설정")
-        fill_frame = ttk.LabelFrame(footer_poly, text="색깔 채움 설정")
-        # footer_pen_radiobutton
-        ttk.Radiobutton(tools_frame, variable=self.tool_var, text="펜", value=1).pack(**args)
-        ttk.Radiobutton(tools_frame, variable=self.tool_var, text="지우개", value=0).pack(**args)
-        ttk.Radiobutton(size_frame, variable=self.size_var, text="얇게", value=1).pack(**args)
-        ttk.Radiobutton(size_frame, variable=self.size_var, text="보통", value=3).pack(**args)
-        ttk.Radiobutton(size_frame, variable=self.size_var, text="굵게", value=5).pack(**args)
-        # footer_poly_radiobutton
-        shape_list = {"line": "직선", "rect": "사각형", "oval": "타원"}
-        color_list = {"red": "빨강", "green": "초록", "blue": "파랑"}
-        var_list = {"shape": [shape_frame, self.shape_var, shape_list],
-                    "color": [color_frame, self.color_var, color_list]}
-        for key, values in var_list.items():
-            for v, t in values[2].items():
-                ttk.Radiobutton(values[0], variable=values[1], text=t, value=v).pack(**args)
-                if key == "color":
-                    ttk.Radiobutton(color_frame_pen, variable=self.pen_color_var, text=t, value=v).pack(**args)
-        # footer_fill
-        check_fill = ttk.Checkbutton(fill_frame, text="색깔 채움 여부", variable=self.check_fill_var)
-
-        # == 배치 == #
-        # 3프레임 (Header, Main, Footer)
-        self.header.grid(row=0, columnspan=1, **grid_args, pady=(5, 0))
-        self.draw_canvas.grid(row=1, columnspan=4, **grid_args, pady=5)
-        self.footer.grid(row=2, columnspan=4, **grid_args, pady=(0, 5))
-        # 하위 위젯들
-        # in header
-        all_delete_btn.pack(**args, padx=(0, 5))
-        undo_btn.pack(**args)
-        # in footer
-        shape_frame.pack(**args)
-        color_frame.pack(**args, padx=5)
-        fill_frame.pack(**args)
-        # footer_pen
-        tools_frame.pack(**args)
-        color_frame_pen.pack(**args, padx=5)
-        size_frame.pack(**args)
-        # footer_fill
-        check_fill.pack()
+        # footer widgets
+        make_labelframe_dict = {}       # {"pen": {"도구 설정": frame...
+        # [frame, text]
+        labelframe_dict = {"pen": [footer_pen, ["도구 설정", "색깔 설정", "크기 설정"]],
+                           "poly": [footer_poly, ["모양 설정", "색깔 설정", "색깔 채움 설정"]]}
+        # [variable, text, value]
+        detail_dict = {"pen": {"도구 설정": [self.tool_var, ["펜", "지우개"], [1, 0]],
+                               "색깔 설정": [self.pen_color_var, ["빨강", "초록", "파랑"], ["red", "green", "blue"]],
+                               "크기 설정": [self.size_var, ["얇게", "보통", "굵게"], [1, 3, 5]]},
+                       "poly": {"모양 설정": [self.shape_var, ["직선", "사각형", "타원"], ["line", "rect", "oval"]],
+                                "색깔 설정": [self.color_var, ["빨강", "초록", "파랑"], ["red", "green", "blue"]],
+                                "색깔 채움 설정": [self.check_fill_var, "색깔 채움 여부", None]}}
+        for k, v_list in labelframe_dict.items():
+            master = v_list[0]
+            temp_dict = {}
+            for t in v_list[1]:
+                temp_frame = ttk.LabelFrame(master, text=t)
+                temp_dict[t] = temp_frame
+                if t == "색깔 채움 설정":
+                    temp_frame.pack()
+                elif t == "색깔 설정":
+                    temp_frame.pack(**args, padx=5)
+                else:
+                    temp_frame.pack(**args)
+            make_labelframe_dict[k] = temp_dict
+        for k, name in make_labelframe_dict.items():
+            for key, frame in name.items():
+                [var, text, value] = detail_dict[k][key]
+                if key == "색깔 채움 설정":
+                    ttk.Checkbutton(frame, variable=var, text=text).pack(**args)
+                else:
+                    for t, v in zip(text, value):
+                        ttk.Radiobutton(frame, variable=var, text=t, value=v).pack(**args)
 
 
 if __name__ == "__main__":
