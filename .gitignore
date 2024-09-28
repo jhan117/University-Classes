@@ -1,2 +1,11 @@
+# IDE 관련 파일 및 디렉터리
 .idea/
+.vs/
+
+# 임시 파일
 temp.txt
+
+# Visual Studio 솔루션 및 프로젝트 파일
+*.sln
+*.vcxproj*
+*x64/
