@@ -14,10 +14,10 @@
 
 강의 노트에서는 매주 학습한 내용을 정리했습니다. 각 주차의 내용을 요약하여 파일에 저장했습니다.
 
-- **Week 1**: 소개, C프로그래밍 기초
-- **Week 2**: 데이터 저장
+- [**Week 1**](Lecture_Notes/Week_1.md): 소개, C프로그래밍 기초
+- [**Week 2**](Lecture_Notes/Week_2.md): 데이터 저장
 - ~~**Week 3**: 공휴일~~
-- **Week 4**: 제어문
+- [**Week 4**](Lecture_Notes/Week_4.md): 제어문
 
 ## 실습 파일
 
