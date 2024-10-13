@@ -27,3 +27,4 @@
 과제는 각 과제의 설명과 솔루션을 포함하고 있습니다.
 
 - **과제 1**: [과제 1 설명](Assignments/Assignment_1/Assignment_1_Description.md)
+- **과제 2**: [과제 2 설명](Assignments/Assignment_2/Assignment_2_Description.md)
