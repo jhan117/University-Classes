@@ -16,11 +16,13 @@
 - [**Week 4**](Lecture_Notes/Week_4.md): 제어문
 - [**Week 5**](Lecture_Notes/Week_5.md): 제어문, 함수
 - [**Week 6**](Lecture_Notes/Week_6.md): 함수
+- [**Week 7**](Lecture_Notes/Week_7.md): 주요 라이브러리 함수 활용
 
 ## 실습 파일
 
 - 퀴즈 1: ~~퀴즈 1 코드~~(저장을 못함)
 - [퀴즈 2](Practice/Practice_1): 반복문
+- [퀴즈 3](Practice/Practice_2): 라이브러리 함수 활용
 
 ## 과제
 
