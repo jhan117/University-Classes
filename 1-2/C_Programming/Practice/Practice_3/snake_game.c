@@ -1,4 +1,4 @@
-#include <stdio.h>
+ï»¿#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <conio.h>
@@ -9,96 +9,162 @@
 #define KEY_UP    (256 + 72)
 #define KEY_DOWN  (256 + 80)
 
+#define WIDTH 80
+#define HEIGHT 25
+
+#define DIR_UP 0
+#define DIR_DOWN 1
+#define DIR_LEFT 2
+#define DIR_RIGHT 3
+
+#define ANSI_COLOR_RED "\x1b[31m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
+int direction = DIR_RIGHT;
+int foodX, foodY;
+int score = 0;
+int collision = 0;
+
+void HideCursor();
+void GotoXY(int x, int y);
+void DrawBorder();
+void Draw(int x, int y, char symbol, int isRed);
+void Erase(int x, int y);
 int GetKey(void);
 double GetElapsedTime(clock_t initial_clock, clock_t current_clock);
-void GotoXY(int x, int y);
-void Erase(int x, int y);    // (x, y)·Î ÀÌµ¿ÇÏ¿© °ø¹é ¹®ÀÚ Ãâ·Â
-void Draw(int x, int y);     // (x, y)·Î ÀÌµ¿ÇÏ¿© ¡®*¡¯ ¹®ÀÚ Ãâ·Â
-void draw_border(int width, int height);
-
-int direction = 1;
-int x_diff = 1;
-int y_diff = 0;
+void MoveCharacter(int* x, int* y);
+void GenerateFood(int* foodX, int* foodY);
+void DrawFood(int foodX, int foodY);
+void DisplayScore();
+int IsFoodOnSnake(int foodX, int foodY, int* snakeX, int* snakeY, int snakeLen);
+int IsSnakeCollidedWithItself(int headX, int headY, int* snakeX, int* snakeY, int snakeLen);
+void UpdateSnakePosition(int* snakeX, int* snakeY, int snakeLen);
 
 int main(void)
 {
     srand(time(NULL));
+    HideCursor();
+    DrawBorder();
 
-    CONSOLE_CURSOR_INFO ci = { 100, FALSE };
-    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ci);
-    draw_border(80, 25);
+    int snakeX[100], snakeY[100];
+    int snakeLen = 3;
+    snakeX[0] = 10;
+    snakeY[0] = 11;
+    Draw(snakeX[0], snakeY[0], 'Q', 0);
 
-    int x = 70;
-    int y = 11;
-    Draw(x, y);
+    GenerateFood(&foodX, &foodY);
+    DrawFood(foodX, foodY);
 
     clock_t initial_clock = clock();
 
     while (1)
     {
-        Sleep(1);
+        Sleep(125);
         clock_t current_clock = clock();
 
-        if (GetElapsedTime(initial_clock, current_clock) > 0.5)
-        {   // 0.5ÃÊ °æ°ú
-            Erase(x, y);
+        if (GetElapsedTime(initial_clock, current_clock) > 0.01)
+        {
+            Erase(snakeX[snakeLen - 1], snakeY[snakeLen - 1]);
+            UpdateSnakePosition(snakeX, snakeY, snakeLen);
+            MoveCharacter(&snakeX[0], &snakeY[0]);
 
-            x += x_diff;
-            y += y_diff;
+            int isSnakeCollied = IsSnakeCollidedWithItself(snakeX[0], snakeY[0], snakeX, snakeY, snakeLen);
+            if (isSnakeCollied || snakeX[0] == 0 || snakeX[0] == WIDTH - 1 || snakeY[0] == 0 || snakeY[0] == HEIGHT - 1)
+                collision = 1;
 
-            Draw(x, y);
-
-            if (x == 0 || x == 79 || y == 0 || y == 24)
+            // ë±€ ê·¸ë¦¬ê¸°
+            Draw(snakeX[0], snakeY[0], 'Q', collision);
+            for (int i = 1; i < snakeLen; i++)
             {
-                GotoXY(39, 11);
-                printf("²Ù¿¡¿¢");
-                GotoXY(0, 25);
-                break;
+                Draw(snakeX[i], snakeY[i], 'O', 0);
             }
 
-            initial_clock = current_clock;  // ±âÁØ ½Ã°¢ Àç¼³Á¤
+            if (snakeX[0] == foodX && snakeY[0] == foodY)
+            {
+                score++;
+                snakeLen++;
+                while (IsFoodOnSnake(foodX, foodY, snakeX, snakeY, snakeLen))
+                {
+                    GenerateFood(&foodX, &foodY);
+                }
+                DrawFood(foodX, foodY);
+            }
+
+            DisplayScore();
+            initial_clock = current_clock;
         }
+
+        if (collision)
+        {
+            GotoXY(WIDTH / 2 - 4, HEIGHT / 2);
+            printf("GAME OVER");
+            GotoXY(WIDTH / 2 - 4, HEIGHT / 2 + 1);
+            printf("Score: %d", score);
+            GotoXY(0, HEIGHT);
+            break;
+        }
+
         if (_kbhit())
         {
             int key = GetKey();
-
-            if (key == KEY_LEFT)
+            switch (key)
             {
-                Erase(x, y);
-                x--;
-                Draw(x, y);
-            }
-            else if (key == KEY_RIGHT)
-            {
-                Erase(x, y);
-                x++;
-                Draw(x, y);
+            case KEY_RIGHT:
+                if (direction != DIR_LEFT)
+                    direction = DIR_RIGHT;
+                break;
+            case KEY_LEFT:
+                if (direction != DIR_RIGHT)
+                    direction = DIR_LEFT;
+                break;
+            case KEY_UP:
+                if (direction != DIR_DOWN)
+                    direction = DIR_UP;
+                break;
+            case KEY_DOWN:
+                if (direction != DIR_UP)
+                    direction = DIR_DOWN;
+                break;
             }
         }
     }
-}
-int GetKey(void)
-{
-    int ch = _getch();
-
-    if (ch == 0 || ch == 224)
-        // ¹æÇâÅ°ÀÇ °æ¿ì 0 ¶Ç´Â 224ÀÇ °ªÀÌ ¸ÕÀú ÀÔ·ÂµÊ
-        ch = 256 + _getch();
-    // ±× ´ÙÀ½¿¡ ÇØ´ç ¹æÇâÅ°¿¡ µû¶ó 72(Up),
-    // 80(Down), 75(Left), 77(Right) °ªÀÌ ÀÔ·ÂµÊ
-    return ch;
+    return 0;
 }
 
-double GetElapsedTime(clock_t initial_clock, clock_t current_clock)
-{
-    return (double)(current_clock - initial_clock) / CLOCKS_PER_SEC;
+void HideCursor() {
+    CONSOLE_CURSOR_INFO ci = { 100, FALSE };
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ci);
 }
 
-void GotoXY(int x, int y)
-{
-    // COORD ±¸Á¶Ã¼ º¯¼ö¸¦ ÅëÇØ ÀÌµ¿ÇÒ À§Ä¡ ¼³Á¤
+void GotoXY(int x, int y) {
     COORD pos = { x, y };
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+
+void DrawBorder() {
+    for (int i = 0; i < WIDTH; i++)
+    {
+        GotoXY(i, 0);
+        printf(i == 0 ? "â”Œ" : (i == WIDTH - 1 ? "â”" : "â”€"));
+        GotoXY(i, HEIGHT - 1);
+        printf(i == 0 ? "â””" : (i == WIDTH - 1 ? "â”˜" : "â”€"));
+    }
+    for (int i = 1; i < HEIGHT - 1; i++)
+    {
+        GotoXY(0, i);
+        printf("â”‚");
+        GotoXY(WIDTH - 1, i);
+        printf("â”‚");
+    }
+}
+
+void Draw(int x, int y, char symbol, int isRed)
+{
+    GotoXY(x, y);
+    if (isRed)
+        printf(ANSI_COLOR_RED "%c" ANSI_COLOR_RESET, symbol);
+    else
+        printf("%c", symbol);
 }
 
 void Erase(int x, int y)
@@ -107,27 +173,87 @@ void Erase(int x, int y)
     printf(" ");
 }
 
-void Draw(int x, int y)
+int GetKey(void)
 {
-    GotoXY(x, y);
-    printf("Q");
+    int ch = _getch();
+    if (ch == 0 || ch == 224)
+        ch = 256 + _getch();
+    return ch;
 }
 
-void draw_border(int width, int height)
+double GetElapsedTime(clock_t initial_clock, clock_t current_clock)
 {
-    for (int i = 0; i < width; i++)
-    {
-        GotoXY(i, 0);
-        printf("*");
-        GotoXY(i, height - 1);
-        printf("*");
-    }
+    return (double)(current_clock - initial_clock) / CLOCKS_PER_SEC;
+}
 
-    for (int j = 0; j < height; j++)
+void MoveCharacter(int* x, int* y)
+{
+    switch (direction)
     {
-        GotoXY(0, j);
-        printf("*");
-        GotoXY(width - 1, j);
-        printf("*");
+    case DIR_UP:
+        (*y)--;
+        break;
+    case DIR_DOWN:
+        (*y)++;
+        break;
+    case DIR_LEFT:
+        (*x)--;
+        break;
+    case DIR_RIGHT:
+        (*x)++;
+        break;
+    }
+}
+
+void GenerateFood(int* foodX, int* foodY)
+{
+    // rand() % (max - min + 1) + min
+    int x_max = WIDTH - 3;
+    int x_min = 3;
+    int y_max = HEIGHT - 3;
+    int y_min = 3;
+
+    *foodX = rand() % (x_max - x_min + 1) + x_min;
+    *foodY = rand() % (y_max - y_min + 1) + y_min;
+}
+
+void DrawFood(int foodX, int foodY)
+{
+    GotoXY(foodX, foodY);
+    printf(ANSI_COLOR_RED "a" ANSI_COLOR_RESET);
+}
+
+void DisplayScore()
+{
+    GotoXY(WIDTH - 15, HEIGHT + 1);
+    printf("Score: %d", score);
+}
+
+int IsFoodOnSnake(int foodX, int foodY, int* snakeX, int* snakeY, int snakeLen)
+{
+    for (int i = 0; i < snakeLen; i++)
+    {
+        if (foodX == snakeX[i] && foodY == snakeY[i])
+            return 1;
+    }
+    return 0;
+}
+
+int IsSnakeCollidedWithItself(int headX, int headY, int* snakeX, int* snakeY, int snakeLen)
+{
+    for (int i = 1; i < snakeLen; i++)
+    {
+        if (headX == snakeX[i] && headY == snakeY[i])
+            return 1;
+    }
+    return 0;
+}
+
+void UpdateSnakePosition(int* snakeX, int* snakeY, int snakeLen)
+{
+    for (int i = snakeLen - 1; i > 0; i--)
+    {
+        snakeX[i] = snakeX[i - 1];
+        snakeY[i] = snakeY[i - 1];
     }
 }
