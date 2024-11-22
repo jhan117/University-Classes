@@ -13,6 +13,7 @@
 - [퀴즈 2](Practice/Practice_1): 반복문
 - [퀴즈 3](Practice/Practice_2): 라이브러리 함수 활용
 - [퀴즈 4](Practice/Practice_3): 뱀 게임
+- [퀴즈 5](Practice/Practice_4): 뱀 게임 업그레이드 (이동 및 몸통 추가)
 
 ## 과제
 
@@ -20,3 +21,5 @@
 
 - **과제 1**: [과제 1 설명](Assignments/Assignment_1/Assignment_1_Description.md)
 - **과제 2**: [과제 2 설명](Assignments/Assignment_2/Assignment_2_Description.md)
+- **과제 3**: [과제 3 코드](Assignments/Assignment_3/main.c)
+- **과제 4**: [과제 4 코드](Assignments/Assignment_4/main.c)
